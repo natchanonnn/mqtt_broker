@@ -20,11 +20,11 @@ var authenticate = (client, username, password, callback) => {
 }
 
 server.on('ready',setup);
-server.on('clientConnected', (client)=>{console.log('Client Connected:',client.id);});
-server.on('clientDisconnected', (client)=>{console.log('Client Disconnected:',client.id);});
+server.on('clientConnected', (client) => {console.log('Client Connected:',client.id);});
+server.on('clientDisconnected', (client) => {console.log('Client Disconnected:',client.id);});
 
 
-server.on('published', (packet,client)=>{
+server.on('published', (packet,client) => {
     //console.log(packet)
     const topic = packet.topic;
     if(packet.topic.substring(packet.topic.length-7)!='clients'){
