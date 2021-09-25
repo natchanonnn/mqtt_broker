@@ -1,57 +1,51 @@
 //Import Modules
 const mosca = require('mosca');
 var mysql = require('mysql');
-require('dotenv').config()
+var config = require('./config')
+require('dotenv').config();
 
-//SQL
-var con = mysql.createConnection({
-    host: process.env.DB_HOST,
-    user: process.env.DB_USER,
-    password: process.env.DB_PASS
-  });
-  
-const query = (data) => {
-    con.connect((err) => {
-        if (err) throw err;
-        console.log("Connected!");
+//Connection
+var db = mysql.createConnection(config.connection);
+var server = new mosca.Server(config.settings);
 
-
-        con.query("CREATE DATABASE testdb", (err, result) => {
-            if (err) throw err;
-            console.log("Database created");
-            });
-    });
-}
-  
-
-var settings = {
-    port: 1883,
-    http: {
-        port: 8883
-    }
-};
-var server = new mosca.Server(settings);
 function setup() {
     server.authenticate = authenticate;
     console.log('Mosca server is up and running (auth)');
 }
-var authenticate = function (client, username, password, callback) {
+
+var authenticate = (client, username, password, callback) => {
     var authorized = (username == 'mqtt' && password == 'password');
     if(authorized) client.user = username;
     callback(null, authorized);
 }
+
 server.on('ready',setup);
-server.on('clientConnected', (client)=>{
-    console.log('Client Connected:',client.id);
-});
-server.on('clientDisconnected', (client)=>{
-    console.log('Client Disconnected:',client.id);
-});
+server.on('clientConnected', (client)=>{console.log('Client Connected:',client.id);});
+server.on('clientDisconnected', (client)=>{console.log('Client Disconnected:',client.id);});
+
+
 server.on('published', (packet,client)=>{
     //console.log(packet)
+    const topic = packet.topic;
     if(packet.topic.substring(packet.topic.length-7)!='clients'){
         console.log('Published', packet.payload.toString());
         const payload = JSON.parse(packet.payload.toString());
-        console.log('B: ',payload);
+        const user_id = client.id;
+        const topic = packet.topic;
+        console.log('Payload: ',payload);
+        console.log('User ID: ',user_id);
+        console.log('Topic :',topic);
+        query(topic,user_id,payload.data);
     }
 });
+
+const query = (topic, user_id, payload) => {
+    db.connect((err) => { if(err) throw err;
+        if(topic == "homeIsolation"){
+            db.query(`Insert into MqttProject.data values (${user_id}, ${payload.timestamp}, ${payload.temperature}, ${payload.o2}, ${payload.heartrate})`, (err, result) => {
+            if(err) throw err;
+            console.log(result);
+        });
+        }
+    });
+};
