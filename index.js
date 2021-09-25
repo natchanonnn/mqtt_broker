@@ -42,10 +42,11 @@ server.on('published', (packet,client)=>{
 const query = (topic, user_id, payload) => {
     db.connect((err) => { if(err) throw err;
         if(topic == "homeIsolation"){
-            db.query(`Insert into MqttProject.data values (${user_id}, ${payload.timestamp}, ${payload.temperature}, ${payload.o2}, ${payload.heartrate})`, (err, result) => {
-            if(err) throw err;
-            console.log(result);
-        });
+            const query = `Insert into MqttProject.data values (${user_id}, ${payload.timestamp}, ${payload.temperature}, ${payload.o2}, ${payload.heartrate})`;
+            db.query(query, (err, result) => {
+                if(err) throw err;
+                console.log(result);
+            });
         }
     });
 };
