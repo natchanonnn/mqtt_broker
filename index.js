@@ -1,8 +1,10 @@
 //Import Modules
 const mosca = require('mosca');
+const express = require('express');
 var mysql = require('mysql');
-var config = require('./config')
+var config = require('./config');
 require('dotenv').config();
+const port = process.env.PORT || 3000;
 
 //Connection
 var db = mysql.createConnection({
@@ -11,6 +13,10 @@ var db = mysql.createConnection({
     password: process.env.DB_PASS
 });
 var server = new mosca.Server(config.settings);
+const app = express()
+
+app.use(express.json());
+app.use(express.urlencoded({ extended: false }));
 
 db.connect(()=>{
     // db.query('SHOW DATABASES;',(err,res)=>{
@@ -20,8 +26,34 @@ db.connect(()=>{
     //         console.log(res)
     //     }
     // });
+    console.log('Database Connected!')
 });
 
+app.post('/',(req,res) =>{
+    const data = {msg: "success"};
+    const body = req.body;
+    //console.log(req.body);
+    const query = "INSERT INTO MqttProject.user (`firstname`, `lastname`, `province`)" + ` VALUES ('${body.name}','${body.surname}','${body.province}');`;
+    //INSERT INTO `MqttProject`.`user` (`firstname`, `lastname`, `province`) VALUES ('no', 'one', 'Lampang');
+    //console.log(query);
+    db.query(query,(err,result)=>{
+        if(err){
+            res.json({msg:"There is error"});
+        }
+        else{
+            //console.log(result);
+            data.userid = result.insertId
+            data.data = req.body
+            res.json(data);
+        }
+    })
+    
+    //res.json(data)
+
+});
+app.listen(port, () => {
+    console.log(`Start server at port ${port}.`);
+})
 
 function setup() {
     server.authenticate = authenticate;
