@@ -5,8 +5,23 @@ var config = require('./config')
 require('dotenv').config();
 
 //Connection
-var db = mysql.createConnection(config.connection);
+var db = mysql.createConnection({
+    host: process.env.DB_HOST,
+    user: process.env.DB_USER,
+    password: process.env.DB_PASS
+});
 var server = new mosca.Server(config.settings);
+
+db.connect(()=>{
+    // db.query('SHOW DATABASES;',(err,res)=>{
+    //     if(err){
+    //         console.log(err)
+    //     }else{
+    //         console.log(res)
+    //     }
+    // });
+});
+
 
 function setup() {
     server.authenticate = authenticate;
@@ -34,19 +49,20 @@ server.on('published', (packet,client) => {
         const topic = packet.topic;
         console.log('Payload: ',payload);
         console.log('User ID: ',user_id);
-        console.log('Topic :',topic);
-        query(topic,user_id,payload.data);
+        console.log('Topic :',topic);     
+        query(topic, user_id, payload.data); 
+        
     }
 });
 
 const query = (topic, user_id, payload) => {
-    db.connect((err) => { if(err) throw err;
         if(topic == "homeIsolation"){
-            const query = `Insert into MqttProject.data values (${user_id}, ${payload.timestamp}, ${payload.temperature}, ${payload.o2}, ${payload.heartrate})`;
+            const query = `Insert into MqttProject.data values (${user_id}, ${payload.timestamp}, ${payload.temperature}, ${payload.o2}, ${payload.heartrate});`;
+            //const query2 = 'select * from MqttProject.data;'
+            console.log(query)
             db.query(query, (err, result) => {
-                if(err) throw err;
-                console.log(result);
+                if(err) console.log(err);
+                else console.log(result);
             });
-        }
-    });
+        };
 };
