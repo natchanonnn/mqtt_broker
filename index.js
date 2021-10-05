@@ -19,23 +19,13 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
 db.connect(()=>{
-    // db.query('SHOW DATABASES;',(err,res)=>{
-    //     if(err){
-    //         console.log(err)
-    //     }else{
-    //         console.log(res)
-    //     }
-    // });
     console.log('Database Connected!')
 });
 
 app.post('/',(req,res) =>{
     const data = {msg: "success"};
     const body = req.body;
-    //console.log(req.body);
-    const query = "INSERT INTO MqttProject.user (`firstname`, `lastname`, `province`)" + ` VALUES ('${body.name}','${body.surname}','${body.province}');`;
-    //INSERT INTO `MqttProject`.`user` (`firstname`, `lastname`, `province`) VALUES ('no', 'one', 'Lampang');
-    //console.log(query);
+    const query = "INSERT INTO MqttProject.user (`firstname`, `lastname`, `province, `citizenID`)" + ` VALUES ('${body.name}','${body.surname}','${body.province}','${body.citizenID}');`;
     db.query(query,(err,result)=>{
         if(err){
             res.json({msg:"There is error"});
@@ -47,9 +37,6 @@ app.post('/',(req,res) =>{
             res.json(data);
         }
     })
-    
-    //res.json(data)
-
 });
 app.listen(port, () => {
     console.log(`Start server at port ${port}.`);
@@ -90,7 +77,6 @@ server.on('published', (packet,client) => {
 const query = (topic, user_id, payload) => {
         if(topic == "homeIsolation"){
             const query = `Insert into MqttProject.data values (${user_id}, ${payload.timestamp}, ${payload.temperature}, ${payload.o2}, ${payload.heartrate});`;
-            //const query2 = 'select * from MqttProject.data;'
             console.log(query)
             db.query(query, (err, result) => {
                 if(err) console.log(err);
